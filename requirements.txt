@@ -22,3 +22,6 @@ PyYAML>=6.0
 # Jupyter / Experiments (optional but recommended)
 jupyter
 ipykernel
+
+
+pillow>=9.0.0
