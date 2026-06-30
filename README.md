@@ -381,22 +381,6 @@ outputs/
 
 These plots help analyze how well the reconstruction error separates normal and anomalous frames.
 
----
-
-## Project Workflow
-
-```text
-1. Load UCSD Ped2 dataset
-2. Preprocess grayscale frames
-3. Train Convolutional Autoencoder on normal frames
-4. Compute training reconstruction errors
-5. Calibrate anomaly threshold
-6. Run inference on test frames
-7. Compute reconstruction error for each frame
-8. Classify frames as normal or anomalous
-9. Evaluate using Precision, Recall, F1-score, and ROC-AUC
-10. Generate result visualizations
-```
 
 ---
 
@@ -452,46 +436,6 @@ These plots help analyze how well the reconstruction error separates normal and 
                 │ Logs + Visualizations    │
                 └─────────────────────────┘
 ```
-
----
-
-## Old Approach and Improvement
-
-Initially, the project explored a CNN + LSTM Autoencoder approach:
-
-```text
-Video frames
-    ↓
-CNN / ResNet feature extraction
-    ↓
-LSTM Autoencoder
-    ↓
-Temporal reconstruction error
-    ↓
-Anomaly prediction
-```
-
-However, this approach produced poor ROC-AUC performance.
-
-### Why the Initial Approach Did Not Work Well
-
-- Pretrained CNN features were not well aligned with grayscale surveillance footage.
-- UCSD Ped2 is relatively small for training a temporal LSTM-based model.
-- Feature-level reconstruction did not clearly separate normal and anomalous frames.
-- Sequence alignment and temporal windowing made the pipeline more complex.
-- The anomaly score did not rank abnormal frames higher than normal frames consistently.
-
-### Final Improvement
-
-The final model uses a simpler and more stable Convolutional Autoencoder trained directly on surveillance frames.
-
-Benefits of the improved approach:
-
-- Direct frame-level reconstruction
-- More interpretable anomaly score
-- Easier threshold calibration
-- Better suited for the UCSD Ped2 fixed-camera setting
-- Lower complexity than CNN + LSTM
 
 ---
 
@@ -657,132 +601,6 @@ else:
 
 ---
 
-## Deployment Plan
-
-The project can be deployed as a real-time CCTV anomaly detection system.
-
-### Deployment Architecture
-
-```text
-CCTV Camera / RTSP Stream
-        ↓
-OpenCV Video Capture
-        ↓
-Frame Sampling
-        ↓
-Preprocessing
-        ↓
-PyTorch / ONNX Model Inference
-        ↓
-Reconstruction Error Calculation
-        ↓
-Threshold Decision
-        ↓
-Alert Generation
-        ↓
-Dashboard + Logs + Saved Clips
-```
-
-### Deployment Steps
-
-1. Train the model offline using normal CCTV footage.
-2. Save model weights and calibrated threshold.
-3. Build a FastAPI inference service.
-4. Use OpenCV to read frames from CCTV or RTSP streams.
-5. Run model inference on sampled frames.
-6. Calculate reconstruction error.
-7. Raise an alert if anomaly score remains high across multiple frames.
-8. Save suspicious frames or video clips.
-9. Display alerts and score timeline on a dashboard.
-10. Monitor false positives and recalibrate the threshold when needed.
-
-### Real-Time Alert Logic
-
-To avoid false alarms from a single noisy frame, alerts should be triggered only when anomaly scores remain high for multiple consecutive frames.
-
-```text
-if anomaly_score > threshold for N consecutive frames:
-    raise alert
-else:
-    continue monitoring
-```
-
----
-
-## Possible Dashboard Features
-
-A real-time dashboard can include:
-
-- Live camera feed
-- Current anomaly score
-- Threshold line
-- Normal / anomaly status
-- Recent alerts
-- Saved suspicious clips
-- Frame-level anomaly timeline
-- Camera-wise logs
-
-Suggested stack:
-
-| Component | Technology |
-|---|---|
-| Backend API | FastAPI / Flask |
-| Video Processing | OpenCV |
-| Frontend | React / HTML / CSS / JavaScript |
-| Database | SQLite / PostgreSQL / MongoDB |
-| Model Inference | PyTorch / ONNX |
-| Deployment | Docker |
-
----
-
-## Limitations
-
-- The model is best suited for fixed-camera surveillance scenes.
-- It performs frame-level detection and does not fully understand long-term event context.
-- Sudden lighting changes, shadows, camera noise, or blur may increase reconstruction error.
-- The threshold may need recalibration for different cameras or environments.
-- Autoencoders may sometimes reconstruct visually similar anomalies too well.
-- The current model detects anomalous frames but does not precisely localize the anomaly region.
-- Real-world deployment would require testing on larger and more diverse CCTV datasets.
-
----
-
-## Future Improvements
-
-- Add ConvLSTM for better temporal motion modeling.
-- Use optical flow to capture abnormal movement patterns.
-- Generate anomaly heatmaps for better explainability.
-- Add object detection to identify specific objects such as bicycles, vehicles, or skateboards.
-- Use adaptive thresholds for different cameras and lighting conditions.
-- Evaluate on larger datasets such as ShanghaiTech, Avenue, and UCF-Crime.
-- Optimize inference using TorchScript, ONNX, or TensorRT.
-- Build a real-time web dashboard for monitoring alerts.
-- Save suspicious clips automatically for security review.
-- Add model drift monitoring and periodic threshold recalibration.
-
----
-
-## Resume Summary
-
-```text
-AI Video Anomaly Detection | Python, PyTorch, OpenCV, Convolutional Autoencoder, NumPy
-
-• Developed an unsupervised computer vision model for CCTV anomaly detection using a Convolutional Autoencoder trained on normal UCSD Ped2 surveillance frames.
-• Designed an end-to-end PyTorch pipeline for frame preprocessing, model training, reconstruction-error based anomaly scoring, threshold calibration, and evaluation.
-• Applied MSE + SSIM loss to improve detection of pixel-level and structural anomalies such as bicycles, skateboarders, and vehicles in pedestrian scenes.
-• Achieved approx. 84% precision, 92% recall, 87.8% F1-score, and ~0.70 ROC-AUC after threshold tuning for balanced frame-level anomaly detection.
-```
-
----
-
-## Interview Explanation
-
-This project detects anomalies in CCTV surveillance footage using unsupervised learning. I trained a Convolutional Autoencoder only on normal pedestrian frames from the UCSD Ped2 dataset. During testing, the model reconstructs each frame and calculates reconstruction error. Since the model has learned normal scenes, it reconstructs normal frames well, but anomalous frames such as bicycles or skateboarders produce higher reconstruction error.
-
-I used a combined MSE + SSIM loss because MSE captures pixel-level differences while SSIM captures structural differences such as edges and object shapes. After training, I calibrated the anomaly threshold using training reconstruction errors and evaluated the model at frame level. The final model achieved approximately 84% precision, 92% recall, 87.8% F1-score, and around 0.70 ROC-AUC.
-
----
-
 ## Author
 
 **Ayush Mittal**  
@@ -791,6 +609,3 @@ Specialization: Artificial Intelligence and Machine Learning
 
 ---
 
-## License
-
-This project is intended for academic and learning purposes.
